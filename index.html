@@ -5,46 +5,110 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>نمایشگاه مجموعه‌ها</title>
 <style>
-body {
-  font-family:'Tahoma',sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center;
-  height:100vh; background:linear-gradient(135deg,#007bff,#00b4d8); color:white; overflow:hidden;
-}
-h1 { font-size:2.5rem; margin-bottom:20px; }
-#loadingText { font-size:1.8rem; margin-bottom:20px; letter-spacing:3px; }
-#operationsIcons { display:flex; justify-content:center; gap:15px; font-size:1.5rem; margin-bottom:20px; }
-#userForm { display:flex; flex-direction:column; align-items:center; }
-input { margin:5px; padding:8px 12px; font-size:16px; border-radius:6px; border:none; }
-button { padding:8px 16px; border-radius:6px; border:none; background:#1565c0; color:white; font-size:16px; cursor:pointer; margin-top:10px; }
+body { font-family:'Tahoma', sans-serif; background:#e3f2fd; color:#222; padding:20px; }
+h1,h2 { color:#0d47a1; }
+.result-box { background:white; padding:12px; border-radius:8px; margin-top:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+button { margin:6px 0; padding:8px 12px; border:none; border-radius:6px; background:#1976d2; color:white; cursor:pointer; }
+button:hover { background:#0d47a1; }
+.user-profile { float:right; display:flex; align-items:center; gap:8px; }
+.user-profile img { width:32px; height:32px; border-radius:50%; }
+.user-profile span { font-weight:bold; }
+.operators { display:flex; gap:8px; margin-top:10px; }
+.operator { width:32px; height:32px; border:1px solid #555; display:flex; justify-content:center; align-items:center; border-radius:4px; font-size:14px; }
 </style>
 </head>
 <body>
 
-<h1 id="loadingText">در حال بارگذاری نمایش مجموعه‌ها<span id="dots"></span></h1>
-<div id="operationsIcons">÷ + × −</div>
-
-<div id="userForm">
-  <input id="firstName" placeholder="نام" type="text">
-  <input id="lastName" placeholder="نام خانوادگی" type="text">
-  <button onclick="saveUser()">تایید و ورود</button>
+<div class="user-profile">
+  <img src="default-avatar.png" alt="پروفایل">
+  <span id="userName">نام نام‌خانوادگی</span>
 </div>
 
+<h1>در حال بارگذاری نمایشگاه مجموعه‌ها...</h1>
+<div class="result-box" id="loadingDots">.</div>
+
+<h2>مجموعه‌های شناخته‌شده:</h2>
+<ul>
+<li>اعداد طبیعی (N): 1,2,3,...</li>
+<li>اعداد حسابی (W): 0,1,2,3,...</li>
+<li>اعداد صحیح (Z): ..., -2,-1,0,1,2,...</li>
+<li>اعداد گویا (Q)</li>
+<li>اعداد گنگ (I)</li>
+<li>اعداد حقیقی (R)</li>
+</ul>
+
+<label>انتخاب مجموعه:</label>
+<select id="knownSet">
+<option value="">انتخاب کنید...</option>
+<option value="N">N (اعداد طبیعی)</option>
+<option value="W">W (اعداد حسابی)</option>
+<option value="Z">Z (اعداد صحیح)</option>
+<option value="Q">Q (اعداد گویا)</option>
+<option value="I">I (اعداد گنگ)</option>
+<option value="R">R (اعداد حقیقی)</option>
+</select>
+
+<input type="text" id="textCondition" placeholder="شرط مجموعه را بنویسید (مثلاً x < 3)">
+<button onclick="makeExpression()">نمایش نماد ریاضی</button>
+<div class="result-box" id="mathResult"></div>
+
+<button onclick="showMembers()">نمایش اعضا</button>
+<div class="result-box" id="membersBox"></div>
+
+<button onclick="showVenn()">نمایش نمودار ون</button>
+<div class="result-box" id="vennBox"></div>
+
+<button onclick="showAxis()">نمایش روی محور</button>
+<div class="result-box" id="axisBox"></div>
+
+<div class="operators">
+<div class="operator">÷</div>
+<div class="operator">+</div>
+<div class="operator">×</div>
+<div class="operator">−</div>
+</div>
+
+<button onclick="window.location.href='operations.html'">انجام عملیات ریاضی</button>
+
 <script>
-// سه نقطه انیمیشن
-let dotCount = 0;
-setInterval(()=> {
-  dotCount = (dotCount+1)%4;
-  document.getElementById('dots').innerText = '.'.repeat(dotCount);
+let dotCount = 1;
+setInterval(()=>{
+  let dots = document.getElementById('loadingDots');
+  dots.innerText = '.'.repeat(dotCount);
+  dotCount = dotCount < 3 ? dotCount+1 : 1;
 },500);
 
-// ذخیره نام و نام خانوادگی در localStorage
-function saveUser() {
-  const first = document.getElementById('firstName').value.trim();
-  const last = document.getElementById('lastName').value.trim();
-  if(!first || !last){ alert('لطفاً نام و نام خانوادگی را وارد کنید'); return; }
-  localStorage.setItem('firstName',first);
-  localStorage.setItem('lastName',last);
-  // رفتن به صفحه مجموعه‌ها بعد از ورود
-  window.location.href='sets.html';
+function makeExpression(){
+  let set = document.getElementById('knownSet').value;
+  let cond = document.getElementById('textCondition').value;
+  if(!set){ alert('لطفاً یک مجموعه انتخاب کنید'); return; }
+  let expression = `{ x ∈ ${set} | ${cond ? cond : '…'} }`;
+  document.getElementById('mathResult').innerText = expression;
+}
+
+function showMembers(){
+  let set = document.getElementById('knownSet').value;
+  let box = document.getElementById('membersBox');
+  if(set==='R' || set==='I' || set==='Q') box.innerText='نمایش اعضا ممکن نیست';
+  else if(set==='N') box.innerText='{1,2,3…}';
+  else if(set==='W') box.innerText='{0,1,2,3…}';
+  else if(set==='Z') box.innerText='{…-3,-2,-1,0,1,2,3…}';
+  else box.innerText='لطفاً ابتدا مجموعه را انتخاب کنید';
+}
+
+function showVenn(){
+  let set = document.getElementById('knownSet').value;
+  let box = document.getElementById('vennBox');
+  if(set==='R' || set==='I' || set==='Q') box.innerText='نمایش نمودار ون ممکن نیست';
+  else box.innerText='🔵 نمودار ون: خط → دایره با اعضا نمایش داده می‌شود';
+}
+
+function showAxis(){
+  let set = document.getElementById('knownSet').value;
+  let box = document.getElementById('axisBox');
+  if(set==='R') box.innerText='خط پیوسته با فلش دو طرف برای اعداد حقیقی';
+  else if(set==='N' || set==='W' || set==='Z') box.innerText='دایره برای هر عدد؛ نامتناهی سمت راست یا چپ باز';
+  else box.innerText='نمایش روی محور ممکن نیست';
 }
 </script>
 
