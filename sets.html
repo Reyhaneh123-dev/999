@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مجموعه‌ها</title>
+<title>نمایشگاه مجموعه‌ها</title>
 <style>
 body { font-family:'Tahoma',sans-serif; background:#e3f2fd; color:#222; padding:40px; direction:rtl; }
 h2 { color:#0d47a1; }
@@ -62,16 +62,25 @@ let last = localStorage.getItem('lastName') || 'نام خانوادگی';
 document.getElementById('userName').innerText = first + ' ' + last;
 document.getElementById('userCircle').innerText = first.charAt(0) + last.charAt(0);
 
+// تبدیل شرط فارسی به ریاضی
+function parseCondition(cond){
+  cond = cond.trim();
+  cond = cond.replace(/بزرگتر مساوی/gi,'≥')
+             .replace(/بزرگتر/gi,'>')
+             .replace(/کوچکتر مساوی/gi,'≤')
+             .replace(/کوچکتر/gi,'<');
+  // اضافه کردن x اگر ندارد
+  if(!/^x/.test(cond)) cond = 'x ' + cond;
+  return cond;
+}
+
 // نمایش نماد ریاضی
 function makeExpression(){
   let set = document.getElementById("knownSet").value;
-  let cond = document.getElementById("textCondition").value.trim();
+  let cond = document.getElementById("textCondition").value;
   if(!set){ alert("لطفاً یک مجموعه انتخاب کنید"); return; }
   if(!cond){ alert("لطفاً شرط را وارد کنید"); return; }
-
-  // تبدیل فارسی → ریاضی (مثال ساده)
-  cond = cond.replace(/بزرگتر مساوی/,'≥').replace(/بزرگتر/,'>').replace(/کوچکتر مساوی/,'≤').replace(/کوچکتر/,'<');
-  let expr = `{ x ∈ ${set} | ${cond} }`;
+  let expr = `{ ${parseCondition(cond)} ∈ ${set} }`;
   document.getElementById("mathResult").innerText = "نمایش ریاضی: " + expr;
 }
 
@@ -80,27 +89,27 @@ function showMembers(){
   let set = document.getElementById("knownSet").value;
   let box = document.getElementById("membersBox");
   if(set==='R'||set==='I'||set==='Q'){ box.innerText="نمایش اعضا امکان‌پذیر نیست."; return; }
-  if(set==='N'){ box.innerText="{1,2,3,…}"; }
-  else if(set==='W'){ box.innerText="{0,1,2,…}"; }
-  else if(set==='Z'){ box.innerText="{…, -2,-1,0,1,2,…}"; }
+  if(set==='N'){ box.innerText="… , 1, 2, 3 …"; }
+  else if(set==='W'){ box.innerText="0, 1, 2, …"; }
+  else if(set==='Z'){ box.innerText="…, -3,-2,-1,0,1,2,3 …"; }
   else{ box.innerText="لطفاً ابتدا مجموعه را انتخاب کنید"; }
 }
 
-// نمودار ون انیمیشنی ساده
+// نمودار ون
 function showVenn(){
   let set = document.getElementById("knownSet").value;
   let box = document.getElementById("vennBox");
   if(set==='R'||set==='I'||set==='Q'){ box.innerText="نمایش نمودار ون امکان‌پذیر نیست."; return; }
-  box.innerText="🔵 نمودار ون: اعضا داخل دایره نمایش داده می‌شوند (انیمیشن خط→دایره)";
+  box.innerText="🔵 نمودار ون: خط → دایره → اعضا";
 }
 
-// محور عددی با مستطیل و دایره
+// محور عددی
 function showAxis(){
   let set = document.getElementById("knownSet").value;
   let box = document.getElementById("axisBox");
   if(set==='Q'||set==='I'){ box.innerText="نمایش روی محور امکان‌پذیر نیست."; return; }
-  if(set==='R'){ box.innerText="محور عددی حقیقی: خط با فلش، هاشور برای محدوده، دایره پر/توخالی"; return; }
-  if(set==='N'||set==='W'||set==='Z'){ box.innerText="محور عددی: دایره برای هر عدد، مستطیل دربرگیرنده محدوده"; return; }
+  if(set==='R'){ box.innerText="محور حقیقی: خط با فلش، هاشور محدوده، دایره پر/توخالی"; return; }
+  if(set==='N'||set==='W'||set==='Z'){ box.innerText="محور عددی: دایره‌ها برای هر عدد، مستطیل محدوده"; return; }
   box.innerText="لطفاً ابتدا مجموعه را انتخاب کنید";
 }
 </script>
