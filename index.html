@@ -5,32 +5,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>نمایشگاه مجموعه‌ها</title>
 <style>
-  body { font-family:'Tahoma',sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; background:linear-gradient(135deg,#007bff,#00b4d8); color:white; flex-direction:column; overflow:hidden;}
-  h1{font-size:2.5rem; margin-bottom:20px;}
-  .loader {border:6px solid rgba(255,255,255,0.3); border-top:6px solid white; border-radius:50%; width:60px; height:60px; animation:spin 1s linear infinite;}
-  @keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-  #userForm{display:flex; flex-direction:column; align-items:center; margin-top:20px;}
-  input{margin:5px; padding:8px 12px; font-size:16px; border-radius:6px; border:none;}
-  button{padding:8px 16px; border-radius:6px; border:none; background:#1565c0; color:white; font-size:16px; cursor:pointer; margin-top:10px;}
+body {
+  font-family:'Tahoma',sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center;
+  height:100vh; background:linear-gradient(135deg,#007bff,#00b4d8); color:white; overflow:hidden;
+}
+h1 { font-size:2.5rem; margin-bottom:20px; }
+#loadingText { font-size:1.8rem; margin-bottom:20px; letter-spacing:3px; }
+#operationsIcons { display:flex; justify-content:center; gap:15px; font-size:1.5rem; margin-bottom:20px; }
+#userForm { display:flex; flex-direction:column; align-items:center; }
+input { margin:5px; padding:8px 12px; font-size:16px; border-radius:6px; border:none; }
+button { padding:8px 16px; border-radius:6px; border:none; background:#1565c0; color:white; font-size:16px; cursor:pointer; margin-top:10px; }
 </style>
 </head>
 <body>
-  <h1>در حال بارگذاری نمایشگاه مجموعه‌ها...</h1>
-  <div class="loader"></div>
-  <div id="userForm">
-    <input id="firstName" placeholder="نام" type="text">
-    <input id="lastName" placeholder="نام خانوادگی" type="text">
-    <button onclick="saveUser()">تایید و ورود</button>
-  </div>
+
+<h1 id="loadingText">در حال بارگذاری نمایش مجموعه‌ها<span id="dots"></span></h1>
+<div id="operationsIcons">÷ + × −</div>
+
+<div id="userForm">
+  <input id="firstName" placeholder="نام" type="text">
+  <input id="lastName" placeholder="نام خانوادگی" type="text">
+  <button onclick="saveUser()">تایید و ورود</button>
+</div>
 
 <script>
+// سه نقطه انیمیشن
+let dotCount = 0;
+setInterval(()=> {
+  dotCount = (dotCount+1)%4;
+  document.getElementById('dots').innerText = '.'.repeat(dotCount);
+},500);
+
+// ذخیره نام و نام خانوادگی در localStorage
 function saveUser() {
-  const f=document.getElementById("firstName").value.trim();
-  const l=document.getElementById("lastName").value.trim();
-  if(!f||!l){alert("لطفاً نام و نام خانوادگی را وارد کنید"); return;}
-  localStorage.setItem("userName",f+" "+l);
-  window.location.href="sets.html";
+  const first = document.getElementById('firstName').value.trim();
+  const last = document.getElementById('lastName').value.trim();
+  if(!first || !last){ alert('لطفاً نام و نام خانوادگی را وارد کنید'); return; }
+  localStorage.setItem('firstName',first);
+  localStorage.setItem('lastName',last);
+  // رفتن به صفحه مجموعه‌ها بعد از ورود
+  window.location.href='sets.html';
 }
 </script>
+
 </body>
 </html>
