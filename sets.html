@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مجموعه‌ها</title>
+<style>
+body{font-family:'Tahoma',sans-serif; background:#e3f2fd; color:#222; padding:20px; direction:rtl;}
+h2{color:#0d47a1;}
+select,input,button{margin:10px 0;padding:8px 12px;font-size:16px;}
+button{border:none;border-radius:8px;cursor:pointer;background:#1976d2;color:white;transition:0.3s;}
+button:hover{background:#0d47a1;}
+.big-btn{display:block;width:90%;margin-top:20px;padding:12px;font-size:18px;background:#1565c0;}
+.result-box{background:white;border-radius:10px;padding:15px;margin-top:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+#vennCanvas,#axisCanvas{width:100%; height:200px; background:#e3f2fd; margin-top:10px;}
+</style>
+</head>
+<body>
+
+<h2>🔹 خوش آمدید <span id="userNameDisplay"></span></h2>
+
+<h2>تعریف مجموعه A:</h2>
+<label>عضو کدام مجموعه جهانی است؟</label>
+<select id="knownSet">
+  <option value="">انتخاب کنید...</option>
+  <option value="N">N (اعداد طبیعی)</option>
+  <option value="W">W (اعداد شمارشی)</option>
+  <option value="Z">Z (اعداد صحیح)</option>
+  <option value="Q">Q (اعداد گویا)</option>
+  <option value="I">I (اعداد گنگ)</option>
+  <option value="R">R (اعداد حقیقی)</option>
+</select>
+
+<label>شرط را به زبان ساده بنویسید:</label><br>
+<input id="textCondition" type="text" placeholder="مثلاً بزرگتر مساوی 3">
+
+<button onclick="makeExpression()">نمایش نماد ریاضی</button>
+<div id="mathResult" class="result-box"></div>
+
+<button onclick="showMembers()">نمایش اعضا</button>
+<div id="membersBox" class="result-box"></div>
+
+<button onclick="showVenn()">نمایش نمودار ون</button>
+<canvas id="vennCanvas"></canvas>
+
+<button onclick="showAxis()">نمایش محور</button>
+<canvas id="axisCanvas"></canvas>
+
+<button class="big-btn" onclick="window.location.href='operations.html'">انجام عملیات ریاضی</button>
+
+<script>
+// نمایش نام کاربر
+document.getElementById("userNameDisplay").innerText = localStorage.getItem("userName") || "";
+
+// تبدیل شرط فارسی به ریاضی
+function convertCondition(cond){
+  let c = cond.replace(/بزرگتر مساوی/gi, "≥")
+              .replace(/کوچکتر مساوی/gi, "≤")
+              .replace(/بزرگتر/gi, ">")
+              .replace(/کوچکتر/gi, "<")
+              .replace(/مساوی/gi, "=");
+  return c;
+}
+
+// نمایش نماد ریاضی
+function makeExpression(){
+  let set = document.getElementById("knownSet").value;
+  let cond = document.getElementById("textCondition").value.trim();
+  if(!set){alert("لطفاً یک مجموعه انتخاب کنید"); return;}
+  if(!cond){alert("لطفاً شرط را وارد کنید"); return;}
+  let expression = `{ x ∈ ${set} | ${convertCondition(cond)} }`;
+  document.getElementById("mathResult").innerText = expression;
+}
+
+// نمایش اعضا برای مجموعه محدود
+function showMembers(){
+  let set = document.getElementById("knownSet").value;
+  let box = document.getElementById("membersBox");
+  if(set==="N"){box.innerText="{1,2,3,...}";}
+  else if(set==="W"){box.innerText="{0,1,2,...}";}
+  else if(set==="Z"){box.innerText="{..., -2,-1,0,1,2,...}";}
+  else{box.innerText="نمایش اعضا برای این مجموعه امکان‌پذیر نیست.";}
+}
+
+// نمودار ون انیمیشنی (ساده)
+function showVenn(){
+  const canvas = document.getElementById("vennCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let cx=canvas.width/2, cy=canvas.height/2, r=50;
+  let angle=0;
+  function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.beginPath();
+    ctx.arc(cx,cy,r*angle/100,0,2*Math.PI*angle/100);
+    ctx.strokeStyle="blue";
+    ctx.lineWidth=3;
+    ctx.stroke();
+    angle++;
+    if(angle<=100) requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+// محور عددی (نمونه ساده)
+function showAxis(){
+  const canvas=document.getElementById("axisCanvas");
+  const ctx=canvas.getContext("2d");
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let startX=50,endX=canvas.width-50,y=100;
+  ctx.beginPath();
+  ctx.moveTo(startX,y);
+  ctx.lineTo(endX,y);
+  ctx.strokeStyle="black";
+  ctx.lineWidth=2;
+  ctx.stroke();
+  // دایره نمونه روی 3،4،5
+  [3,4,5].forEach((num,i)=>{
+    ctx.beginPath();
+    ctx.arc(startX+i*50,y,8,0,2*Math.PI);
+    ctx.fillStyle="black";
+    ctx.fill();
+  });
+}
+</script>
+</body>
+</html>

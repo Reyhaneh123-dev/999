@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>عملیات روی مجموعه‌ها — نمایشگاه</title>
+  <style>
+    :root{--violet:#7b1fa2; --muted:#4b5563}
+    body{margin:0;font-family:Tahoma,IRANSans, sans-serif;background:#fffafc;color:#111}
+    header{background:linear-gradient(90deg,#f8f0ff,var(--violet));color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center}
+    main{max-width:980px;margin:18px auto;padding:18px}
+    .card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 10px 28px rgba(12,12,12,0.06);margin-bottom:12px}
+    label{display:block;margin:8px 0;font-weight:700}
+    select,input,button{padding:8px;border-radius:8px;border:1px solid #eee;font-size:15px}
+    button{background:var(--violet);color:#fff;border:none;cursor:pointer}
+    pre{background:#fbf7ff;padding:10px;border-radius:8px;overflow:auto}
+    .op-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .small-ops{display:flex;gap:6px}
+    .small-ops div{padding:6px;border-radius:8px;background:#fff8;border:1px solid #f0e8ff;font-size:13px}
+  </style>
+</head>
+<body>
+  <header>
+    <div style="font-weight:800">عملیات روی مجموعه‌ها</div>
+    <div style="font-size:13px">نتایج تعاملی و قابل ذخیره</div>
+  </header>
+
+  <main>
+    <div class="card" id="showA"></div>
+
+    <div class="card">
+      <label>ساخت مجموعهٔ B (روش)</label>
+      <select id="methodB">
+        <option value="">انتخاب کنید...</option>
+        <option value="members">نوشتن اعضا (مثلاً: 1,2,3)</option>
+        <option value="symbol">نوشتن نماد (مثلاً: { x ∈ N | x ≤ 5 })</option>
+        <option value="known">از مجموعه‌های شناخته‌شده</option>
+      </select>
+
+      <div id="Bcontent" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <label>انتخاب عمل</label>
+      <select id="operation">
+        <option value="">انتخاب کنید...</option>
+        <option value="union">اجتماع (A ∪ B)</option>
+        <option value="intersection">اشتراک (A ∩ B)</option>
+        <option value="difference">تفاضل (A − B)</option>
+        <option value="subset">آیا A زیرمجموعهٔ B است؟ (A ⊂ B)</option>
+      </select>
+
+      <div style="margin-top:8px" class="op-wrap">
+        <div class="small-ops"><div>÷</div><div>−</div><div>×</div><div>+</div></div>
+        <button id="btnCompute">نمایش و محاسبه</button>
+        <button id="btnSave" style="background:#3b82f6">ذخیرهٔ نتیجه</button>
+      </div>
+      <div id="resultBox" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <label>تاریخچهٔ ذخیره‌شده</label>
+      <div id="history"></div>
+    </div>
+  </main>
+
+  <script>
+    // read A from localStorage
+    const showA = document.getElementById('showA');
+    let setA = {type:'unknown', expr:null, members:[]};
+    const savedExpr = localStorage.getItem('setA_expr');
+    const savedSet = localStorage.getItem('setA_set');
+    const savedRaw = localStorage.getItem('setA_cond_raw');
+
+    if(savedExpr){
+      showA.innerHTML = `<div style="font-weight:800">مجموعهٔ A (ذخیره‌شده)</div><div style="direction:ltr;margin-top:8px;background:#f6f9ff;padding:8px;border-radius:8px">${savedExpr}</div>`;
+      // try to parse finite members from raw
+      const nums = (savedRaw||'').match(/-?\d+(\.\d+)?/g);
+      if(nums && nums.length){ setA = { type:'finite', expr:savedExpr, members:Array.from(new Set(nums.map(Number))) }; }
+      else{ setA = { type:'symbolic', expr:savedExpr, raw:savedRaw, symbol:savedSet } }
+    } else {
+      showA.innerHTML = `<div style="font-weight:800;color:#a00">مجموعهٔ A تعریف نشده — لطفاً ابتدا آن را در صفحهٔ تعریف بسازید یا اینجا تعریف کنید.</div>`;
+    }
+
+    // B input UI
+    const methodB = document.getElementById('methodB'), Bcontent = document.getElementById('Bcontent');
+    methodB.addEventListener('change', ()=>{
+      const v = methodB.value;
+      if(v==='members'){
+        Bcontent.innerHTML = `<label>اعضای B (با کاما جدا):</label><input id="membersB" placeholder="مثلاً: 1,2,3" style="width:100%"/>`;
+      } else if(v==='symbol'){
+        Bcontent.innerHTML = `<label>نماد ریاضی B:</label><input id="symbolB" placeholder="{ x ∈ N | x ≤ 5 } یا {1,2,3}" style="width:100%"/>`;
+      } else if(v==='known'){
+        Bcontent.innerHTML = `<label>مجموعهٔ شناخته‌شده:</label><select id="knownB"><option value="N">N</option><option value="W">W</option><option value="Z">Z</option><option value="Q">Q</option><option value="I">I</option><option value="R">R</option></select>`;
+      } else Bcontent.innerHTML='';
+    });
+
+    function readSetB(){
+      const v = methodB.value;
+      if(v==='members'){
+        const t = (document.getElementById('membersB')||{}).value || '';
+        const nums = t.match(/-?\d+(\.\d+)?/g);
+        if(!nums) return {type:'empty'};
+        return {type:'finite', members:Array.from(new Set(nums.map(Number)))};
+      } else if(v==='symbol'){
+        const t = (document.getElementById('symbolB')||{}).value || '';
+        const nums = t.match(/-?\d+(\.\d+)?/g);
+        if(nums && nums.length) return {type:'finite', members:Array.from(new Set(nums.map(Number)))};
+        if(t.includes('N')) return {type:'symbolic', symbol:'N', raw:t};
+        if(t.includes('R')) return {type:'symbolic', symbol:'R', raw:t};
+        if(t.includes('Z')) return {type:'symbolic', symbol:'Z', raw:t};
+        return {type:'symbolic', raw:t};
+      } else if(v==='known'){
+        const k = (document.getElementById('knownB')||{}).value;
+        return {type:'symbolic', symbol:k};
+      }
+      return {type:'empty'};
+    }
+
+    // set operations (finite sets)
+    function union(A,B){return Array.from(new Set([...A,...B])).sort((a,b)=>a-b)}
+    function intersection(A,B){return A.filter(x=>B.includes(x)).sort((a,b)=>a-b)}
+    function difference(A,B){return A.filter(x=>!B.includes(x)).sort((a,b)=>a-b)}
+    function isSubset(A,B){return A.every(x=>B.includes(x))}
+
+    const btnCompute = document.getElementById('btnCompute'), resultBox = document.getElementById('resultBox');
+    btnCompute.addEventListener('click', ()=>{
+      resultBox.innerHTML = '';
+      const op = document.getElementById('operation').value;
+      if(!op){ resultBox.innerText = 'لطفاً یک عمل انتخاب کنید.'; return; }
+      const B = readSetB();
+      if(setA.type==='finite' && B.type==='finite'){
+        const Avals = setA.members, Bvals = B.members;
+        if(op==='union'){ const C=union(Avals,Bvals); resultBox.innerHTML = `<div><strong>A ∪ B =</strong> { ${C.join(', ')} }</div>`; }
+        else if(op==='intersection'){ const C=intersection(Avals,Bvals); resultBox.innerHTML = `<div><strong>A ∩ B =</strong> { ${C.join(', ')} }</div>`; }
+        else if(op==='difference'){ const C=difference(Avals,Bvals); resultBox.innerHTML = `<div><strong>A − B =</strong> { ${C.join(', ')} }</div>`; }
+        else if(op==='subset'){ const r=isSubset(Avals,Bvals); resultBox.innerHTML = `<div><strong>A ⊂ B ?</strong> ${r ? 'بله، زیرمجموعه است' : 'خیر، زیرمجموعه نیست'}</div>`; }
+      } else {
+        // symbolic handling (explanatory for grade 9)
+        const symStrA = setA.expr || 'A';
+        const symStrB = (B.symbol || B.raw) || 'B';
+        let explanation = '';
+        if(op==='union') explanation = `A ∪ B: اجتماع — تمام اعضایی که در A یا B قرار دارند. اگر یکی از مجموعه‌ها نامتناهی باشد (مثلاً ${symStrA}) معمولاً نتیجه نامتناهی است.`;
+        if(op==='intersection') explanation = `A ∩ B: اشتراک — اعضای مشترک. برای بررسی باید خصائص هرکدام را بسنجیم.`;
+        if(op==='difference') explanation = `A − B: اعضایی از A که در B نیستند. اگر A نمادی و B متناهی باشد می‌توان نتیجه را به صورت فهرست نوشت.`;
+        if(op==='subset') explanation = `برای بررسی زیرمجموعه بودن باید نشان دهیم هر عضو A در B نیز هست.`;
+        resultBox.innerHTML = `<div><strong>توضیح (نمادی):</strong><div style="margin-top:8px">${explanation}</div></div>`;
+      }
+    });
+
+    // save result to history
+    const btnSave = document.getElementById('btnSave'), historyDiv = document.getElementById('history');
+    function loadHistory(){
+      const raw = localStorage.getItem('ops_history');
+      if(!raw){ historyDiv.innerHTML = '<div class="small">هنوز نتیجه‌ای ذخیره نشده است.</div>'; return; }
+      const arr = JSON.parse(raw);
+      historyDiv.innerHTML = arr.map(it=> `<div style="padding:8px;border-radius:8px;background:#fff;margin-bottom:8px"><div style="font-size:13px">${it.time}</div><pre>${it.result}</pre></div>`).join('');
+    }
+    btnSave.addEventListener('click', ()=>{
+      const content = resultBox.innerText || 'بدون نتیجه';
+      const time = new Date().toLocaleString('fa-IR');
+      const raw = JSON.parse(localStorage.getItem('ops_history')||'[]');
+      raw.unshift({time, result:content});
+      localStorage.setItem('ops_history', JSON.stringify(raw.slice(0,20)));
+      alert('نتیجه ذخیره شد.');
+      loadHistory();
+    });
+    loadHistory();
+  </script>
+</body>
+</html>
